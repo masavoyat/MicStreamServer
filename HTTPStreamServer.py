@@ -56,7 +56,10 @@ class streamRequestHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-type','audio/wav')
                 self.end_headers()
                 _, payloadType, seq_number, timestamp, samplingFreq = struct.unpack(">BBHII", data[0:12])
-                sample_size = 2
+                if payloadType == 127:
+                    sample_size = 2
+                else:
+                    sample_size = 1
                 # [Bloc de déclaration d'un fichier au format WAVE]
                 self.wfile.write(b"RIFF") # FileTypeBlocID
                 self.wfile.write(struct.pack('<I', 0xffffffff)) # FileSize => Max
@@ -68,14 +71,17 @@ class streamRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(struct.pack('<H', 1)) # NbrCanaux
                 self.wfile.write(struct.pack('<I', samplingFreq)) # Frequence
                 self.wfile.write(struct.pack('<I', samplingFreq*sample_size)) # BytePerSec
-                self.wfile.write(struct.pack('<H', 2)) # BytePerBloc
-                self.wfile.write(struct.pack('<H', 16)) # BitsPerSample
+                self.wfile.write(struct.pack('<H', sample_size)) # BytePerBloc
+                self.wfile.write(struct.pack('<H', sample_size*8)) # BitsPerSample
                 # [Bloc des données]
                 self.wfile.write(b"data") # DataBlocID
                 self.wfile.write(struct.pack('<I', 0xffffffff)) # DataSize => Max
                 while True:
                     try:
-                        data = q.get()
+                        data = q.get()        
+                        _, newPayloadType, _, _, newSamplingFreq = struct.unpack(">BBHII", data[0:12])
+                        if payloadType != newPayloadType or samplingFreq != newSamplingFreq: # Critical stream parameter changed
+                            return
                         if not data: # receiver send None so it is closing
                             return
                         self.wfile.write(data[12:])
