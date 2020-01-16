@@ -27,8 +27,6 @@ class HTTPStreamServer(ThreadingMixIn, HTTPServer):
             self._receiverList.remove(receiver)
     
     def close(self):
-        for receiver in self._receiverList:
-            self.removeReceiver(receiver)
         self.socket.close()
         
 
@@ -81,11 +79,14 @@ class streamRequestHandler(BaseHTTPRequestHandler):
                         data = q.get()        
                         _, newPayloadType, _, _, newSamplingFreq = struct.unpack(">BBHII", data[0:12])
                         if payloadType != newPayloadType or samplingFreq != newSamplingFreq: # Critical stream parameter changed
+                            receiver.unregisterQueue(q)
                             return
                         if not data: # receiver send None so it is closing
+                            receiver.unregisterQueue(q)
                             return
                         self.wfile.write(data[12:])
                     except:
+                        receiver.unregisterQueue(q)
                         print("Stream closed")
                         return
         if self.path == "/tone":
