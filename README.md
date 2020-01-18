@@ -1,2 +1,2 @@
 # MicStreamServer
-Web server writtent in Python to gather and listen stream from MicStream App
+Web server written in Python to gather and listen stream from MicStream App

@@ -6,7 +6,7 @@ Created on Thu Dec 19 13:52:52 2019
 """
 import socket
 import threading
-
+import zlib
 
 class UDPStreamReceiver:
     _BUFFER_SIZE = 1024
@@ -38,6 +38,11 @@ class UDPStreamReceiver:
         while True:
             try:
                 data, addr = self._sock.recvfrom(UDPStreamReceiver._BUFFER_SIZE)
+                # Payload ZIP compressed
+                if data[1] == 125 or data[1] == 124:
+                    header = list(data[:12])
+                    header[1] += 2 # payload is now raw
+                    data = bytes(header) + zlib.decompress(data[12:])
             except:
                 data = None # Send None data to advertise socket is dead
             self._registeredQueueListLock.acquire()
