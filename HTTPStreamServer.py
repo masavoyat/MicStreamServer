@@ -131,11 +131,37 @@ class streamRequestHandler(BaseHTTPRequestHandler):
                     return
                 time.sleep(3)
             
-#        if self.path == "/":
-#            self.send_response(200)
-#            self.send_header('Content-type',"text/html")
-#            self.end_headers()
-#            self.wfile.write(b'<audio autoplay controls style="width:100%; height:40px;" src="audio.wav"></audio>')
+        if self.path == "/":
+            self.send_response(200)
+            self.send_header('Content-type',"text/html")
+            self.end_headers()
+            self.wfile.write(b'<table border="1">')
+            self.wfile.write(b'<tr>')
+            line = '<th>Stream Name</th>'
+            line += '<th>Port</th>'
+            line += '<th>Sampling Freq</th>'
+            line += '<th>Alive</th>'
+            line += '<th>Payload Type</th>'
+            line += '<th>Registered queue</th>'
+            line += '<th>Wav stream</th>'
+            self.wfile.write(line.encode())
+            self.wfile.write(b'</tr>')
+            for receiver in self.server._receiverList:
+                infos = receiver.getInfos()
+                self.wfile.write(b'<tr>')
+                line = "<td>" + infos["name"] + "</td>"
+                line += "<td>" + str(infos["port"]) + "</td>"
+                line += "<td>" + str(infos["sampling_frequency"]) + "</td>"
+                if infos["last_packet_time"] < time.time() - 1:
+                    line += "<td>NO</td>"
+                else:
+                    line += "<td>YES</td>"
+                line += "<td>" + receiver.PAYLOAD_TYPES_STR[infos["payload_type"]] + "</td>"
+                line += "<td>" + str(infos["registered_queue"]) + "</td>"
+                line += '<td><a href="/' + infos["name"] + '">WAV</a></td>'
+                self.wfile.write(line.encode())
+                self.wfile.write(b'</tr>')
+            self.wfile.write(b'</table>')
         else:
             self.send_response(404)
             self.end_headers()
