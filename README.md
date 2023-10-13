@@ -14,3 +14,7 @@ python3 ./MicStreamServer.py
 ```
 
 3. In your web browser, open http://localhost:8080/
+
+Web UI:
+
+![Web UI](https://github.com/masavoyat/MicStreamServer/assets/34810600/6669e82f-88a0-4977-838f-c1440cf34c4d)
